@@ -58,11 +58,9 @@ class _SplashContent extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           child: ClipOval(
-            child: Image.network(
-              'https://picsum.photos/seed/origami/200/200',
+            child: Image.asset(
+              'assets/images/origami_logo.png',
               fit: BoxFit.cover,
-              errorBuilder: (_, _, _) =>
-                  const Icon(Icons.catching_pokemon, size: 64, color: Color(0xFFFF8F00)),
             ),
           ),
         ),

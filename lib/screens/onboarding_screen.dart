@@ -19,18 +19,11 @@ class OnboardingScreen extends StatelessWidget {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(20),
-                      child: Image.network(
-                        'https://picsum.photos/seed/origami-craft/600/560',
+                      child: Image.asset(
+                        'assets/images/origami_onboarding.png',
                         width: double.infinity,
                         height: 280,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => Container(
-                          width: double.infinity,
-                          height: 280,
-                          color: const Color(0xFFFFF3E0),
-                          child: const Icon(Icons.catching_pokemon,
-                              size: 120, color: Color(0xFFFF8F00)),
-                        ),
                       ),
                     ),
                     const SizedBox(height: 36),
