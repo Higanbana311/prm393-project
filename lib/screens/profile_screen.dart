@@ -9,13 +9,12 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  bool _darkMode = false;
+  bool _darkMode = themeModeNotifier.value == ThemeMode.dark;
   bool _notifications = true;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(64),
         child: GradientAppBar(title: 'Hồ sơ', showBack: true),
@@ -44,6 +43,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 subtitle: 'Mẫu Origami yêu thích',
                 onTap: () {},
               ),
+              const Divider(height: 1, indent: 56),
+              _MenuItem(
+                icon: Icons.people_outline,
+                iconBg: const Color(0xFFE0F2FE),
+                iconColor: Color(0xFF0284C7),
+                title: 'Bạn bè',
+                subtitle: 'Kết nối với bạn bè',
+                onTap: () =>
+                    Navigator.of(context).pushNamed(AppRoutes.friends),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -64,7 +73,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 icon: Icons.dark_mode_outlined,
                 title: 'Chế độ tối',
                 value: _darkMode,
-                onChanged: (v) => setState(() => _darkMode = v),
+                onChanged: (v) {
+                  setState(() => _darkMode = v);
+                  themeModeNotifier.value =
+                      v ? ThemeMode.dark : ThemeMode.light;
+                },
               ),
               const Divider(height: 1, indent: 56),
               _ToggleMenuItem(
@@ -107,7 +120,7 @@ class _ProfileHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(color: Color(0x0F000000), blurRadius: 8, offset: Offset(0, 2)),
@@ -134,7 +147,7 @@ class _ProfileHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 14),
-          const Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
@@ -142,13 +155,16 @@ class _ProfileHeader extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF1A1A2E),
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
-              SizedBox(height: 2),
+              const SizedBox(height: 2),
               Text(
                 'user@example.com',
-                style: TextStyle(fontSize: 13, color: Color(0xFF9B9B9B)),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -167,7 +183,7 @@ class _MenuCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(color: Color(0x0F000000), blurRadius: 8, offset: Offset(0, 2)),
@@ -234,7 +250,7 @@ class _ToggleMenuItem extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
         children: [
-          Icon(icon, size: 22, color: const Color(0xFF6B7280)),
+          Icon(icon, size: 22, color: Theme.of(context).colorScheme.onSurfaceVariant),
           const SizedBox(width: 14),
           Expanded(
             child: Text(title,

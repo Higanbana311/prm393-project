@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  bool _obscure = true;
+class _RegisterScreenState extends State<RegisterScreen> {
+  bool _obscurePassword = true;
+  bool _obscureConfirm = true;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const Center(
                 child: Text(
-                  'Đăng nhập',
+                  'Đăng ký',
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
@@ -34,67 +35,59 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 4),
               const Center(
                 child: Text(
-                  'Chào mừng trở lại!',
+                  'Tạo tài khoản mới',
                   style: TextStyle(fontSize: 14, color: Color(0xFF9747FF)),
                 ),
               ),
               const SizedBox(height: 32),
+              const Text('Họ và tên',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              _buildInputField(hint: 'Nguyễn Văn A'),
+              const SizedBox(height: 20),
               const Text('Email',
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
-              _InputField(
-                  hint: 'example@email.com',
-                  keyboardType: TextInputType.emailAddress),
+              _buildInputField(
+                hint: 'example@email.com',
+                keyboardType: TextInputType.emailAddress,
+              ),
               const SizedBox(height: 20),
               const Text('Mật khẩu',
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
-              _PasswordField(
-                obscure: _obscure,
-                onToggle: () => setState(() => _obscure = !_obscure),
+              _buildPasswordField(
+                obscure: _obscurePassword,
+                onToggle: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
+              ),
+              const SizedBox(height: 20),
+              const Text('Xác nhận mật khẩu',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              _buildPasswordField(
+                obscure: _obscureConfirm,
+                onToggle: () =>
+                    setState(() => _obscureConfirm = !_obscureConfirm),
               ),
               const SizedBox(height: 28),
               GradientButton(
-                label: 'Đăng nhập',
+                label: 'Đăng ký',
                 onPressed: () =>
                     Navigator.of(context).pushReplacementNamed(AppRoutes.home),
               ),
               const SizedBox(height: 24),
-              const _OrDivider(),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: OutlinedButton(
-                  onPressed: () =>
-                      Navigator.of(context).pushReplacementNamed(AppRoutes.home),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFFD1D5DB)),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30)),
-                  ),
-                  child: const Text(
-                    'Tiếp tục với tư cách khách',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF374151),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
               Center(
                 child: GestureDetector(
-                  onTap: () =>
-                      Navigator.of(context).pushNamed(AppRoutes.register),
+                  onTap: () => Navigator.of(context).pop(),
                   child: RichText(
                     text: const TextSpan(
-                      text: 'Chưa có tài khoản? ',
-                      style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                      text: 'Đã có tài khoản? ',
+                      style:
+                          TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
                       children: [
                         TextSpan(
-                          text: 'Đăng ký ngay',
+                          text: 'Đăng nhập',
                           style: TextStyle(
                             color: Color(0xFF9747FF),
                             fontWeight: FontWeight.w600,
@@ -111,16 +104,11 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-}
 
-class _InputField extends StatelessWidget {
-  const _InputField({required this.hint, this.keyboardType});
-
-  final String hint;
-  final TextInputType? keyboardType;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildInputField({
+    required String hint,
+    TextInputType? keyboardType,
+  }) {
     return TextField(
       keyboardType: keyboardType,
       decoration: InputDecoration(
@@ -137,16 +125,11 @@ class _InputField extends StatelessWidget {
       ),
     );
   }
-}
 
-class _PasswordField extends StatelessWidget {
-  const _PasswordField({required this.obscure, required this.onToggle});
-
-  final bool obscure;
-  final VoidCallback onToggle;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildPasswordField({
+    required bool obscure,
+    required VoidCallback onToggle,
+  }) {
     return TextField(
       obscureText: obscure,
       decoration: InputDecoration(
@@ -170,25 +153,6 @@ class _PasswordField extends StatelessWidget {
           onPressed: onToggle,
         ),
       ),
-    );
-  }
-}
-
-class _OrDivider extends StatelessWidget {
-  const _OrDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Row(
-      children: [
-        Expanded(child: Divider(color: Color(0xFFD1D5DB))),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12),
-          child: Text('Hoặc',
-              style: TextStyle(color: Color(0xFF9B9B9B), fontSize: 13)),
-        ),
-        Expanded(child: Divider(color: Color(0xFFD1D5DB))),
-      ],
     );
   }
 }

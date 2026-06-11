@@ -8,7 +8,11 @@ import 'screens/detail_screen.dart';
 import 'screens/tutorial_screen.dart';
 import 'screens/search_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/friends_screen.dart';
+import 'screens/register_screen.dart';
 import 'data/lotus_steps.dart';
+
+final themeModeNotifier = ValueNotifier<ThemeMode>(ThemeMode.light);
 
 void main() {
   runApp(const OrigamiApp());
@@ -26,6 +30,8 @@ class AppRoutes {
   static const search = '/search';
   static const profile = '/profile';
   static const tutorial = '/tutorial';
+  static const friends = '/friends';
+  static const register = '/register';
 }
 
 // ─── Theme constants ─────────────────────────────────────────────────────────
@@ -329,7 +335,7 @@ class TutorialCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: const [
             BoxShadow(color: Color(0x0F000000), blurRadius: 8, offset: Offset(0, 2)),
@@ -367,10 +373,10 @@ class TutorialCard extends StatelessWidget {
                 children: [
                   Text(
                     data.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF1A1A2E),
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -386,10 +392,10 @@ class TutorialCard extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         data.rating.toString(),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF374151),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -411,26 +417,39 @@ class OrigamiApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Origami',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: kPurple),
-        scaffoldBackgroundColor: Colors.white,
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeModeNotifier,
+      builder: (_, mode, _) => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Origami',
+        themeMode: mode,
+        theme: ThemeData(
+          useMaterial3: true,
+          colorScheme: ColorScheme.fromSeed(seedColor: kPurple),
+          scaffoldBackgroundColor: const Color(0xFFF9FAFB),
+        ),
+        darkTheme: ThemeData(
+          useMaterial3: true,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: kPurple,
+            brightness: Brightness.dark,
+          ),
+        ),
+        initialRoute: AppRoutes.splash,
+        routes: {
+          AppRoutes.splash: (_) => const SplashScreen(),
+          AppRoutes.onboarding: (_) => const OnboardingScreen(),
+          AppRoutes.login: (_) => const LoginScreen(),
+          AppRoutes.home: (_) => const HomeScreen(),
+          AppRoutes.category: (_) => const CategoryScreen(),
+          AppRoutes.detail: (_) => const DetailScreen(),
+          AppRoutes.tutorial: (_) => const TutorialScreen(),
+          AppRoutes.search: (_) => const SearchScreen(),
+          AppRoutes.profile: (_) => const ProfileScreen(),
+          AppRoutes.friends: (_) => const FriendsScreen(),
+          AppRoutes.register: (_) => const RegisterScreen(),
+        },
       ),
-      initialRoute: AppRoutes.splash,
-      routes: {
-        AppRoutes.splash: (_) => const SplashScreen(),
-        AppRoutes.onboarding: (_) => const OnboardingScreen(),
-        AppRoutes.login: (_) => const LoginScreen(),
-        AppRoutes.home: (_) => const HomeScreen(),
-        AppRoutes.category: (_) => const CategoryScreen(),
-        AppRoutes.detail: (_) => const DetailScreen(),
-        AppRoutes.tutorial: (_) => const TutorialScreen(),
-        AppRoutes.search: (_) => const SearchScreen(),
-        AppRoutes.profile: (_) => const ProfileScreen(),
-      },
     );
   }
 }
