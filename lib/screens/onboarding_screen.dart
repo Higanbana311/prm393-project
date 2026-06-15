@@ -22,7 +22,7 @@ class OnboardingScreen extends StatelessWidget {
                       child: Image.asset(
                         'assets/images/origami_onboarding.png',
                         width: double.infinity,
-                        height: 280,
+                        height: 200,
                         fit: BoxFit.cover,
                       ),
                     ),

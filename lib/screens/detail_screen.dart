@@ -144,7 +144,25 @@ class _DetailSliverAppBar extends StatelessWidget {
         ),
       ),
       actions: [
-        _ActionButton(icon: Icons.favorite_outline, onTap: () {}),
+        ValueListenableBuilder<List<TutorialData>>(
+          valueListenable: favoritesNotifier,
+          builder: (context, favorites, _) {
+            final isFav = favorites.any((t) => t.title == data.title);
+            return _ActionButton(
+              icon: isFav ? Icons.favorite : Icons.favorite_outline,
+              iconColor: isFav ? kPink : const Color(0xFF1A1A2E),
+              onTap: () {
+                if (isFav) {
+                  favoritesNotifier.value = favorites
+                      .where((t) => t.title != data.title)
+                      .toList();
+                } else {
+                  favoritesNotifier.value = [...favorites, data];
+                }
+              },
+            );
+          },
+        ),
         const SizedBox(width: 4),
         _ActionButton(icon: Icons.share_outlined, onTap: () {}),
         const SizedBox(width: 8),
@@ -167,10 +185,15 @@ class _DetailSliverAppBar extends StatelessWidget {
 }
 
 class _ActionButton extends StatelessWidget {
-  const _ActionButton({required this.icon, required this.onTap});
+  const _ActionButton({
+    required this.icon,
+    required this.onTap,
+    this.iconColor = const Color(0xFF1A1A2E),
+  });
 
   final IconData icon;
   final VoidCallback onTap;
+  final Color iconColor;
 
   @override
   Widget build(BuildContext context) {
@@ -186,7 +209,7 @@ class _ActionButton extends StatelessWidget {
             BoxShadow(color: Color(0x1A000000), blurRadius: 6),
           ],
         ),
-        child: Icon(icon, size: 20, color: const Color(0xFF1A1A2E)),
+        child: Icon(icon, size: 20, color: iconColor),
       ),
     );
   }

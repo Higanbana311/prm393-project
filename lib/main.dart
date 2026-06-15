@@ -10,6 +10,8 @@ import 'screens/search_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/friends_screen.dart';
 import 'screens/register_screen.dart';
+import 'screens/my_origami_screen.dart';
+import 'screens/favorites_screen.dart';
 import 'data/lotus_steps.dart';
 
 final themeModeNotifier = ValueNotifier<ThemeMode>(ThemeMode.light);
@@ -32,6 +34,8 @@ class AppRoutes {
   static const tutorial = '/tutorial';
   static const friends = '/friends';
   static const register = '/register';
+  static const myOrigami = '/my-origami';
+  static const favorites = '/favorites';
 }
 
 // ─── Theme constants ─────────────────────────────────────────────────────────
@@ -178,6 +182,15 @@ final kNewDesigns = [
     description: 'Bướm giấy nhiều màu sắc, trang trí đẹp mắt.',
   ),
 ];
+
+final myOrigamiNotifier = ValueNotifier<List<TutorialData>>([
+  kFeaturedTutorials[0],
+]);
+
+final favoritesNotifier = ValueNotifier<List<TutorialData>>([
+  kFeaturedTutorials[1],
+  kNewDesigns[0],
+]);
 
 const kCategories = [
   CategoryData(name: 'Động vật', emoji: '🦢', count: 25, bgColor: Color(0xFFEEF2FF)),
@@ -448,6 +461,8 @@ class OrigamiApp extends StatelessWidget {
           AppRoutes.profile: (_) => const ProfileScreen(),
           AppRoutes.friends: (_) => const FriendsScreen(),
           AppRoutes.register: (_) => const RegisterScreen(),
+          AppRoutes.myOrigami: (_) => const MyOrigamiScreen(),
+          AppRoutes.favorites: (_) => const FavoritesScreen(),
         },
       ),
     );

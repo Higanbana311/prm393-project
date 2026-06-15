@@ -11,6 +11,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _darkMode = themeModeNotifier.value == ThemeMode.dark;
   bool _notifications = true;
+  int _tab = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +33,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 iconColor: kPurple,
                 title: 'Origami của tôi',
                 subtitle: 'Xem các mẫu đã lưu',
-                onTap: () {},
+                onTap: () =>
+                    Navigator.of(context).pushNamed(AppRoutes.myOrigami),
               ),
               const Divider(height: 1, indent: 56),
               _MenuItem(
@@ -41,7 +43,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 iconColor: kPink,
                 title: 'Yêu thích',
                 subtitle: 'Mẫu Origami yêu thích',
-                onTap: () {},
+                onTap: () =>
+                    Navigator.of(context).pushNamed(AppRoutes.favorites),
               ),
               const Divider(height: 1, indent: 56),
               _MenuItem(
@@ -109,6 +112,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: AppBottomNav(
+        currentIndex: _tab,
+        onTap: (i) {
+          if (i == 1) {
+            Navigator.of(context).pushNamed(AppRoutes.search);
+          } else if (i == 2) {
+            Navigator.of(context).pushNamed(AppRoutes.profile);
+          } else {
+            setState(() => _tab = i);
+          }
+        },
       ),
     );
   }
