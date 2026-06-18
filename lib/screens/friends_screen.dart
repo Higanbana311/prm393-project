@@ -305,9 +305,9 @@ class _Friend {
 
 const _mockFriends = [
   _Friend(
-    name: 'Minh Tuấn',
-    email: 'minhtuan@example.com',
-    initials: 'MT',
+    name: 'Yến Nhi',
+    email: 'yennhi@example.com',
+    initials: 'YN',
     color: Color(0xFF8B2FC9),
     completed: 12,
   ),

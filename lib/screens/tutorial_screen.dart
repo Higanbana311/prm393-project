@@ -1,4 +1,8 @@
+import 'package:camera/camera.dart';
+import 'package:file_saver/file_saver.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../main.dart';
 
 class TutorialScreen extends StatefulWidget {
@@ -286,10 +290,135 @@ class _StepCard extends StatelessWidget {
 
 // ─── Completion screen ────────────────────────────────────────────────────────
 
-class _CompletionView extends StatelessWidget {
+class _CompletionView extends StatefulWidget {
   const _CompletionView({required this.onHome});
 
   final VoidCallback onHome;
+
+  @override
+  State<_CompletionView> createState() => _CompletionViewState();
+}
+
+class _CompletionViewState extends State<_CompletionView> {
+  Uint8List? _photo;
+  bool _picking = false;
+
+  Future<void> _takePhoto() async {
+    if (_picking) return;
+    setState(() => _picking = true);
+    try {
+      Uint8List? bytes;
+      if (kIsWeb) {
+        bytes = await showDialog<Uint8List>(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => const _CameraDialog(),
+        );
+      } else {
+        final image = await ImagePicker().pickImage(
+          source: ImageSource.camera,
+          imageQuality: 90,
+        );
+        if (image != null) bytes = await image.readAsBytes();
+      }
+      if (bytes != null && mounted) {
+        setState(() => _photo = bytes);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _showPhotoPreview(_photo!);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Không thể chụp ảnh: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _picking = false);
+    }
+  }
+
+  void _showPhotoPreview(Uint8List photo) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
+              child: Image.memory(photo, fit: BoxFit.cover),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                        _takePhoto();
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFE5E7EB)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30)),
+                      ),
+                      child: const Text('Chụp lại'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: kBtnGradient,
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final messenger = ScaffoldMessenger.of(context);
+                          Navigator.of(ctx).pop();
+                          try {
+                            await FileSaver.instance.saveFile(
+                              name: 'origami_${DateTime.now().millisecondsSinceEpoch}',
+                              bytes: photo,
+                              fileExtension: 'jpg',
+                              mimeType: MimeType.jpeg,
+                            );
+                            messenger.showSnackBar(
+                              const SnackBar(
+                                content: Text('Đã lưu ảnh thành công!'),
+                              ),
+                            );
+                          } catch (e) {
+                            messenger.showSnackBar(
+                              SnackBar(content: Text('Không thể lưu ảnh: $e')),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30)),
+                        ),
+                        child: const Text(
+                          'Lưu',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -358,7 +487,40 @@ class _CompletionView extends StatelessWidget {
                     const SizedBox(height: 40),
                     GradientButton(
                       label: '  Về trang chủ',
-                      onPressed: onHome,
+                      onPressed: widget.onHome,
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: OutlinedButton.icon(
+                        onPressed: _picking ? null : _takePhoto,
+                        icon: _picking
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Color(0xFF374151),
+                                ),
+                              )
+                            : Icon(
+                                _photo != null
+                                    ? Icons.camera_alt
+                                    : Icons.camera_alt_outlined,
+                              ),
+                        label: Text(
+                          _photo != null ? 'Chụp lại thành phẩm' : 'Chụp ảnh thành phẩm',
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(
+                              color: Color(0xFFE5E7EB), width: 1.5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          foregroundColor: const Color(0xFF374151),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
@@ -464,5 +626,157 @@ class _Confetti extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+// ─── Web camera dialog ────────────────────────────────────────────────────────
+
+class _CameraDialog extends StatefulWidget {
+  const _CameraDialog();
+
+  @override
+  State<_CameraDialog> createState() => _CameraDialogState();
+}
+
+class _CameraDialogState extends State<_CameraDialog> {
+  CameraController? _controller;
+  bool _initializing = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _initCamera();
+  }
+
+  Future<void> _initCamera() async {
+    try {
+      final cameras = await availableCameras();
+      if (cameras.isEmpty) {
+        setState(() {
+          _error = 'Không tìm thấy camera nào trên thiết bị';
+          _initializing = false;
+        });
+        return;
+      }
+      final controller = CameraController(
+        cameras.first,
+        ResolutionPreset.medium,
+        enableAudio: false,
+      );
+      await controller.initialize();
+      if (mounted) {
+        setState(() {
+          _controller = controller;
+          _initializing = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = 'Không thể truy cập camera: $e';
+          _initializing = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _capture() async {
+    final ctrl = _controller;
+    if (ctrl == null || !ctrl.value.isInitialized) return;
+    try {
+      final xFile = await ctrl.takePicture();
+      final bytes = await xFile.readAsBytes();
+      if (mounted) Navigator.of(context).pop(bytes);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi chụp ảnh: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            child: SizedBox(height: 300, child: _buildPreview()),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(null),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFE5E7EB)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30)),
+                    ),
+                    child: const Text('Hủy'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: _initializing || _error != null
+                          ? const LinearGradient(
+                              colors: [Color(0xFFD1D5DB), Color(0xFFD1D5DB)])
+                          : kBtnGradient,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: ElevatedButton.icon(
+                      onPressed:
+                          _initializing || _error != null ? null : _capture,
+                      icon: const Icon(Icons.camera_alt, color: Colors.white),
+                      label: const Text('Chụp',
+                          style: TextStyle(color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        disabledBackgroundColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30)),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPreview() {
+    if (_initializing) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(_error!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xFF6B7280))),
+        ),
+      );
+    }
+    return CameraPreview(_controller!);
   }
 }

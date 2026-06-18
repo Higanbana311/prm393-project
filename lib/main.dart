@@ -13,6 +13,7 @@ import 'screens/register_screen.dart';
 import 'screens/my_origami_screen.dart';
 import 'screens/favorites_screen.dart';
 import 'data/lotus_steps.dart';
+import 'data/crane_steps.dart';
 
 final themeModeNotifier = ValueNotifier<ThemeMode>(ThemeMode.light);
 
@@ -136,11 +137,13 @@ final kFeaturedTutorials = [
     difficultyBg: Color(0xFFDCFCE7),
     rating: 4.8,
     imageUrl: 'https://picsum.photos/seed/crane-paper/600/360',
-    steps: 20,
+    localImageAsset: 'assets/images/crane.jpg',
+    steps: 28,
     minutes: '15-20 phút',
     tags: ['Dễ', 'Giấy', 'Động vật', 'Truyền thống'],
     description:
         'Hạc giấy (折鶴, orizuru) là một trong những mẫu origami truyền thống và nổi tiếng nhất của Nhật Bản. Theo truyền thuyết, người gấp được 1000 con hạc giấy sẽ được thực hiện một điều ước.',
+    tutorialSteps: kCraneSteps,
   ),
 ];
 

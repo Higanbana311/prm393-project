@@ -11,6 +11,7 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   final _controller = TextEditingController();
   String _query = '';
+  int _tab = 1;
 
   static const _recentSearches = [
     'Hạc giấy truyền thống',
@@ -53,14 +54,14 @@ class _SearchScreenState extends State<SearchScreen> {
               onChanged: (v) => setState(() => _query = v),
               decoration: InputDecoration(
                 hintText: 'Tìm kiếm mẫu Origami...',
-                hintStyle:
-                    const TextStyle(color: Color(0xFF9B9B9B), fontSize: 14),
-                prefixIcon:
-                    const Icon(Icons.search, color: Color(0xFF9B9B9B)),
+                hintStyle: const TextStyle(
+                  color: Color(0xFF9B9B9B),
+                  fontSize: 14,
+                ),
+                prefixIcon: const Icon(Icons.search, color: Color(0xFF9B9B9B)),
                 suffixIcon: _query.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.close,
-                            color: Color(0xFF9B9B9B)),
+                        icon: const Icon(Icons.close, color: Color(0xFF9B9B9B)),
                         onPressed: () {
                           _controller.clear();
                           setState(() => _query = '');
@@ -91,6 +92,20 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: AppBottomNav(
+        currentIndex: _tab,
+        onTap: (i) {
+          if (i == 0) {
+            Navigator.of(context).pop(); 
+          } else if (i == 1) {
+            Navigator.of(context).pushReplacementNamed(
+              AppRoutes.search,
+            ); 
+          } else if (i == 2) {
+            Navigator.of(context).pushReplacementNamed(AppRoutes.profile);
+          }
+        },
+      ),
     );
   }
 }
@@ -114,19 +129,24 @@ class _SearchSuggestions extends StatelessWidget {
         const Text(
           'Tìm kiếm gần đây',
           style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1A1A2E)),
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1A1A2E),
+          ),
         ),
         const SizedBox(height: 12),
         ...recentSearches.map(
           (term) => ListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text(term,
-                style: const TextStyle(
-                    fontSize: 14, color: Color(0xFF374151))),
-            trailing: const Icon(Icons.search,
-                size: 18, color: Color(0xFF9B9B9B)),
+            title: Text(
+              term,
+              style: const TextStyle(fontSize: 14, color: Color(0xFF374151)),
+            ),
+            trailing: const Icon(
+              Icons.search,
+              size: 18,
+              color: Color(0xFF9B9B9B),
+            ),
             onTap: () => onTap(term),
           ),
         ),
@@ -134,9 +154,10 @@ class _SearchSuggestions extends StatelessWidget {
         const Text(
           'Tìm kiếm phổ biến',
           style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1A1A2E)),
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1A1A2E),
+          ),
         ),
         const SizedBox(height: 12),
         Wrap(
@@ -148,14 +169,20 @@ class _SearchSuggestions extends StatelessWidget {
                   onTap: () => onTap(term),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 8),
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF3F4F6),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Text(term,
-                        style: const TextStyle(
-                            fontSize: 13, color: Color(0xFF374151))),
+                    child: Text(
+                      term,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF374151),
+                      ),
+                    ),
                   ),
                 ),
               )

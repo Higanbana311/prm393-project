@@ -11,7 +11,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _darkMode = themeModeNotifier.value == ThemeMode.dark;
   bool _notifications = true;
-  int _tab = 0;
+  int _tab = 2;
 
   @override
   Widget build(BuildContext context) {
@@ -53,8 +53,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 iconColor: Color(0xFF0284C7),
                 title: 'Bạn bè',
                 subtitle: 'Kết nối với bạn bè',
-                onTap: () =>
-                    Navigator.of(context).pushNamed(AppRoutes.friends),
+                onTap: () => Navigator.of(context).pushNamed(AppRoutes.friends),
               ),
             ],
           ),
@@ -78,8 +77,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 value: _darkMode,
                 onChanged: (v) {
                   setState(() => _darkMode = v);
-                  themeModeNotifier.value =
-                      v ? ThemeMode.dark : ThemeMode.light;
+                  themeModeNotifier.value = v
+                      ? ThemeMode.dark
+                      : ThemeMode.light;
                 },
               ),
               const Divider(height: 1, indent: 56),
@@ -103,7 +103,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: const Text(
                 'Đăng xuất',
@@ -116,12 +117,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       bottomNavigationBar: AppBottomNav(
         currentIndex: _tab,
         onTap: (i) {
-          if (i == 1) {
-            Navigator.of(context).pushNamed(AppRoutes.search);
+          if (i == 0) {
+            Navigator.of(context).pop(); 
+          } else if (i == 1) {
+            Navigator.of(context).pushReplacementNamed(
+              AppRoutes.search,
+            ); 
           } else if (i == 2) {
-            Navigator.of(context).pushNamed(AppRoutes.profile);
-          } else {
-            setState(() => _tab = i);
+            Navigator.of(context).pushReplacementNamed(AppRoutes.profile);
           }
         },
       ),
@@ -138,7 +141,11 @@ class _ProfileHeader extends StatelessWidget {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
-          BoxShadow(color: Color(0x0F000000), blurRadius: 8, offset: Offset(0, 2)),
+          BoxShadow(
+            color: Color(0x0F000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
         ],
       ),
       child: Row(
@@ -201,7 +208,11 @@ class _MenuCard extends StatelessWidget {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
-          BoxShadow(color: Color(0x0F000000), blurRadius: 8, offset: Offset(0, 2)),
+          BoxShadow(
+            color: Color(0x0F000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
         ],
       ),
       child: Column(children: children),
@@ -233,13 +244,19 @@ class _MenuItem extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-            color: iconBg, borderRadius: BorderRadius.circular(10)),
+          color: iconBg,
+          borderRadius: BorderRadius.circular(10),
+        ),
         child: Icon(icon, color: iconColor, size: 22),
       ),
-      title: Text(title,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-      subtitle: Text(subtitle,
-          style: const TextStyle(fontSize: 12, color: Color(0xFF9B9B9B))),
+      title: Text(
+        title,
+        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: const TextStyle(fontSize: 12, color: Color(0xFF9B9B9B)),
+      ),
       trailing: const Icon(Icons.chevron_right, color: Color(0xFFD1D5DB)),
       onTap: onTap,
     );
@@ -265,12 +282,17 @@ class _ToggleMenuItem extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
         children: [
-          Icon(icon, size: 22, color: Theme.of(context).colorScheme.onSurfaceVariant),
+          Icon(
+            icon,
+            size: 22,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           const SizedBox(width: 14),
           Expanded(
-            child: Text(title,
-                style:
-                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+            ),
           ),
           Switch(
             value: value,
