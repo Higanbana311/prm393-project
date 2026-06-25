@@ -66,10 +66,17 @@ class TutorialStep {
   final String title;
   final String description;
   final String imageAsset;
+
+  factory TutorialStep.fromJson(Map<String, dynamic> j) => TutorialStep(
+        title: j['Title'] as String,
+        description: j['Description'] as String,
+        imageAsset: j['ImageAsset'] as String,
+      );
 }
 
 class TutorialData {
   const TutorialData({
+    this.id,
     required this.title,
     required this.difficulty,
     required this.difficultyColor,
@@ -84,6 +91,7 @@ class TutorialData {
     this.tutorialSteps = const [],
   });
 
+  final int? id;
   final String title;
   final String difficulty;
   final Color difficultyColor;
@@ -96,20 +104,53 @@ class TutorialData {
   final String description;
   final String? localImageAsset;
   final List<TutorialStep> tutorialSteps;
+
+  factory TutorialData.fromJson(Map<String, dynamic> j) => TutorialData(
+        id: j['Id'] as int?,
+        title: j['Title'] as String,
+        difficulty: j['Difficulty'] as String,
+        difficultyColor: _hexColor(j['DifficultyColor'] as String),
+        difficultyBg: _hexColor(j['DifficultyBg'] as String),
+        rating: (j['Rating'] as num).toDouble(),
+        imageUrl: j['ImageUrl'] as String? ?? '',
+        localImageAsset: j['LocalImageAsset'] as String?,
+        steps: j['StepCount'] as int? ?? 0,
+        minutes: j['Duration'] as String? ?? '',
+        description: j['Description'] as String? ?? '',
+        tags: (j['tags'] as List<dynamic>?)?.cast<String>() ?? [],
+        tutorialSteps: (j['tutorialSteps'] as List<dynamic>?)
+                ?.map((s) => TutorialStep.fromJson(s as Map<String, dynamic>))
+                .toList() ??
+            [],
+      );
+
+  static Color _hexColor(String hex) {
+    final h = hex.replaceFirst('#', '');
+    return Color(int.parse('FF$h', radix: 16));
+  }
 }
 
 class CategoryData {
   const CategoryData({
+    this.id,
     required this.name,
     required this.emoji,
-    required this.count,
+    this.count = 0,
     required this.bgColor,
   });
 
+  final int? id;
   final String name;
   final String emoji;
   final int count;
   final Color bgColor;
+
+  factory CategoryData.fromJson(Map<String, dynamic> j) => CategoryData(
+        id: j['Id'] as int?,
+        name: j['Name'] as String,
+        emoji: j['Emoji'] as String,
+        bgColor: TutorialData._hexColor(j['BgColor'] as String),
+      );
 }
 
 // ─── Sample data ─────────────────────────────────────────────────────────────
@@ -204,6 +245,66 @@ const kCategories = [
   CategoryData(name: 'Tim', emoji: '❤️', count: 8, bgColor: Color(0xFFFFF1F2)),
   CategoryData(name: 'Rồng', emoji: '🐉', count: 6, bgColor: Color(0xFFECFDF5)),
   CategoryData(name: 'Thuyền', emoji: '⛵', count: 14, bgColor: Color(0xFFEFF6FF)),
+];
+
+// ─── Friends data ─────────────────────────────────────────────────────────────
+
+class Friend {
+  const Friend({
+    this.id,
+    required this.name,
+    required this.email,
+    required this.initials,
+    required this.color,
+    required this.completed,
+  });
+
+  final int? id;
+  final String name;
+  final String email;
+  final String initials;
+  final Color color;
+  final int completed;
+
+  factory Friend.fromJson(Map<String, dynamic> j) => Friend(
+        id: j['Id'] as int?,
+        name: j['FullName'] as String,
+        email: j['Email'] as String,
+        initials: j['AvatarInitials'] as String? ?? '',
+        color: TutorialData._hexColor(j['AvatarColor'] as String? ?? '#8B2FC9'),
+        completed: j['Completed'] as int? ?? 0,
+      );
+}
+
+const kMockFriends = [
+  Friend(
+    name: 'Yến Nhi',
+    email: 'yennhi@example.com',
+    initials: 'YN',
+    color: Color(0xFF8B2FC9),
+    completed: 12,
+  ),
+  Friend(
+    name: 'Lan Anh',
+    email: 'lananh@example.com',
+    initials: 'LA',
+    color: Color(0xFFE91E8C),
+    completed: 7,
+  ),
+  Friend(
+    name: 'Đức Khoa',
+    email: 'duckhoa@example.com',
+    initials: 'ĐK',
+    color: Color(0xFF0284C7),
+    completed: 23,
+  ),
+  Friend(
+    name: 'Thu Hà',
+    email: 'thuha@example.com',
+    initials: 'TH',
+    color: Color(0xFF16A34A),
+    completed: 5,
+  ),
 ];
 
 // ─── Shared Widgets ───────────────────────────────────────────────────────────

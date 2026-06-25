@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
+import '../services/auth_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -11,7 +12,37 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _darkMode = themeModeNotifier.value == ThemeMode.dark;
   bool _notifications = true;
-  int _tab = 2;
+  final int _tab = 2;
+
+  String _name = '';
+  String _email = '';
+  String _initials = '';
+  String _colorHex = '#8B2FC9';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final info = await AuthService.instance.getUserInfo();
+    if (mounted) {
+      setState(() {
+        _name = info['name'] ?? 'Người Dùng';
+        _email = info['email'] ?? '';
+        _initials = info['initials'] ?? '';
+        _colorHex = info['color'] ?? '#8B2FC9';
+      });
+    }
+  }
+
+  Future<void> _logout() async {
+    await AuthService.instance.logout();
+    if (mounted) {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.login);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +54,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _ProfileHeader(),
+          _ProfileHeader(
+            name: _name,
+            email: _email,
+            initials: _initials,
+            colorHex: _colorHex,
+          ),
           const SizedBox(height: 16),
           _MenuCard(
             children: [
@@ -50,7 +86,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _MenuItem(
                 icon: Icons.people_outline,
                 iconBg: const Color(0xFFE0F2FE),
-                iconColor: Color(0xFF0284C7),
+                iconColor: const Color(0xFF0284C7),
                 title: 'Bạn bè',
                 subtitle: 'Kết nối với bạn bè',
                 onTap: () => Navigator.of(context).pushNamed(AppRoutes.friends),
@@ -77,9 +113,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 value: _darkMode,
                 onChanged: (v) {
                   setState(() => _darkMode = v);
-                  themeModeNotifier.value = v
-                      ? ThemeMode.dark
-                      : ThemeMode.light;
+                  themeModeNotifier.value =
+                      v ? ThemeMode.dark : ThemeMode.light;
                 },
               ),
               const Divider(height: 1, indent: 56),
@@ -96,8 +131,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             width: double.infinity,
             height: 52,
             child: ElevatedButton(
-              onPressed: () =>
-                  Navigator.of(context).pushReplacementNamed(AppRoutes.login),
+              onPressed: _logout,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFDC2626),
                 foregroundColor: Colors.white,
@@ -118,11 +152,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         currentIndex: _tab,
         onTap: (i) {
           if (i == 0) {
-            Navigator.of(context).pop(); 
+            Navigator.of(context).pop();
           } else if (i == 1) {
-            Navigator.of(context).pushReplacementNamed(
-              AppRoutes.search,
-            ); 
+            Navigator.of(context).pushReplacementNamed(AppRoutes.search);
           } else if (i == 2) {
             Navigator.of(context).pushReplacementNamed(AppRoutes.profile);
           }
@@ -133,8 +165,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 class _ProfileHeader extends StatelessWidget {
+  const _ProfileHeader({
+    required this.name,
+    required this.email,
+    required this.initials,
+    required this.colorHex,
+  });
+
+  final String name;
+  final String email;
+  final String initials;
+  final String colorHex;
+
+  Color get _color {
+    try {
+      return Color(int.parse(colorHex.replaceFirst('#', 'FF'), radix: 16));
+    } catch (_) {
+      return const Color(0xFF8B2FC9);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final displayInitials =
+        initials.isNotEmpty ? initials : (name.isNotEmpty ? name[0] : '?');
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -153,15 +207,15 @@ class _ProfileHeader extends StatelessWidget {
           Container(
             width: 56,
             height: 56,
-            decoration: const BoxDecoration(
-              gradient: kBtnGradient,
+            decoration: BoxDecoration(
+              color: _color.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: const Center(
+            child: Center(
               child: Text(
-                'NĐ',
+                displayInitials,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: _color,
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                 ),
@@ -169,26 +223,28 @@ class _ProfileHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Người Dùng',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Theme.of(context).colorScheme.onSurface,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name.isEmpty ? 'Người Dùng' : name,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'user@example.com',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                const SizedBox(height: 2),
+                Text(
+                  email,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
