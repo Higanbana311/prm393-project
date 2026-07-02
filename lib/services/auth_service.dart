@@ -12,6 +12,7 @@ class AuthService {
   static const _keyUserEmail = 'user_email';
   static const _keyUserInitials = 'user_initials';
   static const _keyUserColor = 'user_color';
+  static const _keyUserNickname = 'user_nickname';
 
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -53,6 +54,7 @@ class AuthService {
     await prefs.remove(_keyUserEmail);
     await prefs.remove(_keyUserInitials);
     await prefs.remove(_keyUserColor);
+    await prefs.remove(_keyUserNickname);
   }
 
   Future<Map<String, String?>> getUserInfo() async {
@@ -62,7 +64,16 @@ class AuthService {
       'email': prefs.getString(_keyUserEmail),
       'initials': prefs.getString(_keyUserInitials),
       'color': prefs.getString(_keyUserColor),
+      'nickname': prefs.getString(_keyUserNickname),
     };
+  }
+
+  Future<String> updateNickname(String nickname) async {
+    final resp = await ApiClient.instance.dio.patch('/auth/nickname', data: {'nickname': nickname});
+    final updated = resp.data['nickname'] as String;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyUserNickname, updated);
+    return updated;
   }
 
   Future<void> _saveSession(Map<String, dynamic> data) async {
@@ -75,11 +86,15 @@ class AuthService {
     await prefs.setString(_keyUserEmail, user['Email'] as String);
     await prefs.setString(_keyUserInitials, user['AvatarInitials'] as String? ?? '');
     await prefs.setString(_keyUserColor, user['AvatarColor'] as String? ?? '#8B2FC9');
+    await prefs.setString(_keyUserNickname, user['Nickname'] as String? ?? '');
   }
 
   String dioErrorMessage(Object e) {
     if (e is DioException && e.response != null) {
-      return e.response!.data['message'] ?? 'Lỗi không xác định';
+      final data = e.response!.data;
+      if (data is Map) return (data['message'] as String?) ?? 'Lỗi không xác định';
+      if (data is String && data.isNotEmpty) return data;
+      return 'Lỗi server (${e.response!.statusCode})';
     }
     return 'Không thể kết nối server';
   }

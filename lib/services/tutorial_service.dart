@@ -21,4 +21,13 @@ class TutorialService {
     final resp = await _dio.get('/tutorials/$id');
     return TutorialData.fromJson(resp.data);
   }
+
+  /// Chia sẻ một mẫu tới danh sách bạn bè. [type] = 'detail' hoặc 'completion'.
+  /// Trả về số người đã nhận được chia sẻ.
+  Future<int> share(int tutorialId, List<int> friendIds,
+      {String type = 'detail'}) async {
+    final resp = await _dio.post('/tutorials/$tutorialId/share',
+        data: {'friendIds': friendIds, 'type': type});
+    return (resp.data['sent'] as int?) ?? friendIds.length;
+  }
 }

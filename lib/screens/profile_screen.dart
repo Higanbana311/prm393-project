@@ -18,6 +18,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _email = '';
   String _initials = '';
   String _colorHex = '#8B2FC9';
+  String _nickname = '';
 
   @override
   void initState() {
@@ -33,7 +34,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _email = info['email'] ?? '';
         _initials = info['initials'] ?? '';
         _colorHex = info['color'] ?? '#8B2FC9';
+        _nickname = info['nickname'] ?? '';
       });
+    }
+  }
+
+  Future<void> _showEditNicknameDialog() async {
+    final ctrl = TextEditingController(text: _nickname);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Đổi nickname', style: TextStyle(fontWeight: FontWeight.w700)),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          maxLength: 50,
+          decoration: InputDecoration(
+            hintText: 'Nhập nickname...',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Huỷ'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kPurple,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: const Text('Lưu'),
+          ),
+        ],
+      ),
+    );
+    ctrl.dispose();
+    if (result == null || result.isEmpty || result == _nickname) return;
+    try {
+      final updated = await AuthService.instance.updateNickname(result);
+      if (mounted) setState(() => _nickname = updated);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AuthService.instance.dioErrorMessage(e)),
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
     }
   }
 
@@ -59,6 +110,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             email: _email,
             initials: _initials,
             colorHex: _colorHex,
+            nickname: _nickname,
+            onEditNickname: _showEditNicknameDialog,
           ),
           const SizedBox(height: 16),
           _MenuCard(
@@ -170,12 +223,16 @@ class _ProfileHeader extends StatelessWidget {
     required this.email,
     required this.initials,
     required this.colorHex,
+    required this.nickname,
+    required this.onEditNickname,
   });
 
   final String name;
   final String email;
   final String initials;
   final String colorHex;
+  final String nickname;
+  final VoidCallback onEditNickname;
 
   Color get _color {
     try {
@@ -236,10 +293,34 @@ class _ProfileHeader extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Text(
+                      nickname.isEmpty ? 'Chưa có nickname' : '@$nickname',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: nickname.isEmpty
+                            ? Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5)
+                            : kPurple,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    GestureDetector(
+                      onTap: onEditNickname,
+                      child: Icon(
+                        Icons.edit_outlined,
+                        size: 14,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
                 Text(
                   email,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),

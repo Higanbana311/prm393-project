@@ -12,8 +12,6 @@ import 'screens/friends_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/my_origami_screen.dart';
 import 'screens/favorites_screen.dart';
-import 'data/lotus_steps.dart';
-import 'data/crane_steps.dart';
 
 final themeModeNotifier = ValueNotifier<ThemeMode>(ThemeMode.light);
 
@@ -169,7 +167,6 @@ final kFeaturedTutorials = [
     tags: ['Khó', 'Giấy', 'Hoa', 'Nghệ thuật'],
     description:
         'Hoa sen (荷花) là biểu tượng của sự thuần khiết và giác ngộ trong văn hóa châu Á. Mẫu origami này tái hiện vẻ đẹp tinh tế của hoa sen qua từng nếp gấp.',
-    tutorialSteps: kLotusSteps,
   ),
   const TutorialData(
     title: 'Hạc giấy truyền thống',
@@ -184,7 +181,6 @@ final kFeaturedTutorials = [
     tags: ['Dễ', 'Giấy', 'Động vật', 'Truyền thống'],
     description:
         'Hạc giấy (折鶴, orizuru) là một trong những mẫu origami truyền thống và nổi tiếng nhất của Nhật Bản. Theo truyền thuyết, người gấp được 1000 con hạc giấy sẽ được thực hiện một điều ước.',
-    tutorialSteps: kCraneSteps,
   ),
 ];
 
@@ -257,6 +253,8 @@ class Friend {
     required this.initials,
     required this.color,
     required this.completed,
+    this.nickname = '',
+    this.hasPendingRequest = false,
   });
 
   final int? id;
@@ -265,14 +263,80 @@ class Friend {
   final String initials;
   final Color color;
   final int completed;
+  final String nickname;
+  final bool hasPendingRequest;
 
   factory Friend.fromJson(Map<String, dynamic> j) => Friend(
         id: j['Id'] as int?,
         name: j['FullName'] as String,
-        email: j['Email'] as String,
+        email: j['Email'] as String? ?? '',
         initials: j['AvatarInitials'] as String? ?? '',
         color: TutorialData._hexColor(j['AvatarColor'] as String? ?? '#8B2FC9'),
         completed: j['Completed'] as int? ?? 0,
+        nickname: j['Nickname'] as String? ?? '',
+        hasPendingRequest: (j['HasPendingRequest'] as int? ?? 0) == 1,
+      );
+}
+
+class FriendRequest {
+  const FriendRequest({
+    required this.id,
+    required this.senderId,
+    required this.senderName,
+    required this.senderNickname,
+    required this.senderInitials,
+    required this.senderColor,
+    required this.completed,
+    required this.createdAt,
+  });
+
+  final int id;
+  final int senderId;
+  final String senderName;
+  final String senderNickname;
+  final String senderInitials;
+  final Color senderColor;
+  final int completed;
+  final DateTime createdAt;
+
+  String get displayName => senderNickname.isNotEmpty ? senderNickname : senderName;
+
+  factory FriendRequest.fromJson(Map<String, dynamic> j) => FriendRequest(
+        id: j['Id'] as int,
+        senderId: j['SenderId'] as int,
+        senderName: j['FullName'] as String,
+        senderNickname: j['Nickname'] as String? ?? '',
+        senderInitials: j['AvatarInitials'] as String? ?? '',
+        senderColor: TutorialData._hexColor(j['AvatarColor'] as String? ?? '#8B2FC9'),
+        completed: j['Completed'] as int? ?? 0,
+        createdAt: DateTime.tryParse(j['CreatedAt'] as String? ?? '') ?? DateTime.now(),
+      );
+}
+
+class AppNotification {
+  const AppNotification({
+    required this.id,
+    required this.title,
+    required this.body,
+    required this.icon,
+    required this.isRead,
+    required this.createdAt,
+  });
+
+  final int id;
+  final String title;
+  final String body;
+  final String icon;
+  final bool isRead;
+  final DateTime createdAt;
+
+  factory AppNotification.fromJson(Map<String, dynamic> j) => AppNotification(
+        id: j['Id'] as int,
+        title: j['Title'] as String,
+        body: j['Body'] as String,
+        icon: j['Icon'] as String? ?? 'notifications',
+        isRead: j['IsRead'] == true || j['IsRead'] == 1,
+        createdAt: DateTime.tryParse(j['CreatedAt'] as String? ?? '') ?? DateTime.now(),
       );
 }
 

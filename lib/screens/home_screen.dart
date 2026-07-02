@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/tutorial_service.dart';
+import '../services/notification_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -135,35 +136,92 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _NotificationsSheet extends StatelessWidget {
+class _NotificationsSheet extends StatefulWidget {
   const _NotificationsSheet();
 
-  static const _items = [
-    (
-      icon: Icons.star_outline,
-      color: Color(0xFFD97706),
-      bg: Color(0xFFFEF3C7),
-      title: 'Hoa sen được yêu thích',
-      body: 'Mẫu Hoa sen vừa nhận được đánh giá 5 sao mới!',
-      time: '5 phút trước',
-    ),
-    (
-      icon: Icons.local_fire_department_outlined,
-      color: Color(0xFFEA580C),
-      bg: Color(0xFFFFF7ED),
-      title: 'Nội dung mới',
-      body: 'Hướng dẫn "Rồng thần thoại" vừa được cập nhật thêm bước.',
-      time: '1 giờ trước',
-    ),
-    (
-      icon: Icons.emoji_events_outlined,
-      color: Color(0xFF8B2FC9),
-      bg: Color(0xFFEDE9FE),
-      title: 'Chúc mừng!',
-      body: 'Bạn đã hoàn thành 3 hướng dẫn. Tiếp tục nhé!',
-      time: 'Hôm qua',
-    ),
-  ];
+  @override
+  State<_NotificationsSheet> createState() => _NotificationsSheetState();
+}
+
+class _NotificationsSheetState extends State<_NotificationsSheet> {
+  List<AppNotification> _items = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final data = await NotificationService.instance.getAll();
+      if (mounted) setState(() { _items = data; _loading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _markRead(AppNotification n) async {
+    if (n.isRead) return;
+    try {
+      await NotificationService.instance.markRead(n.id);
+      if (mounted) {
+        setState(() {
+          final idx = _items.indexWhere((x) => x.id == n.id);
+          if (idx != -1) {
+            _items[idx] = AppNotification(
+              id: n.id, title: n.title, body: n.body,
+              icon: n.icon, isRead: true, createdAt: n.createdAt,
+            );
+          }
+        });
+      }
+    } catch (_) {}
+  }
+
+  static IconData _iconData(String icon) {
+    switch (icon) {
+      case 'star':        return Icons.star_outline;
+      case 'fire':        return Icons.local_fire_department_outlined;
+      case 'trophy':      return Icons.emoji_events_outlined;
+      case 'person_add':  return Icons.person_add_outlined;
+      case 'bookmark':    return Icons.bookmark_outline;
+      case 'check':       return Icons.check_circle_outline;
+      default:            return Icons.notifications_outlined;
+    }
+  }
+
+  static Color _iconColor(String icon) {
+    switch (icon) {
+      case 'star':        return const Color(0xFFD97706);
+      case 'fire':        return const Color(0xFFEA580C);
+      case 'trophy':      return const Color(0xFF8B2FC9);
+      case 'person_add':  return const Color(0xFF0284C7);
+      case 'bookmark':    return const Color(0xFF16A34A);
+      default:            return const Color(0xFF8B2FC9);
+    }
+  }
+
+  static Color _iconBg(String icon) {
+    switch (icon) {
+      case 'star':        return const Color(0xFFFEF3C7);
+      case 'fire':        return const Color(0xFFFFF7ED);
+      case 'trophy':      return const Color(0xFFEDE9FE);
+      case 'person_add':  return const Color(0xFFE0F2FE);
+      case 'bookmark':    return const Color(0xFFDCFCE7);
+      default:            return const Color(0xFFEDE9FE);
+    }
+  }
+
+  static String _timeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1)  return 'Vừa xong';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} phút trước';
+    if (diff.inHours < 24)   return '${diff.inHours} giờ trước';
+    if (diff.inDays == 1)    return 'Hôm qua';
+    return '${diff.inDays} ngày trước';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -172,8 +230,7 @@ class _NotificationsSheet extends StatelessWidget {
       children: [
         const SizedBox(height: 12),
         Container(
-          width: 40,
-          height: 4,
+          width: 40, height: 4,
           decoration: BoxDecoration(
             color: const Color(0xFFD1D5DB),
             borderRadius: BorderRadius.circular(2),
@@ -182,43 +239,77 @@ class _NotificationsSheet extends StatelessWidget {
         const SizedBox(height: 16),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            children: [
-              Text(
-                'Thông báo',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-              ),
-            ],
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Thông báo',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
           ),
         ),
         const SizedBox(height: 8),
-        ..._items.map(
-          (n) => ListTile(
-            leading: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: n.bg,
-                borderRadius: BorderRadius.circular(12),
+        if (_loading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 32),
+            child: Center(child: CircularProgressIndicator(color: kPurple)),
+          )
+        else if (_items.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 32),
+            child: Center(
+              child: Text(
+                'Không có thông báo nào',
+                style: TextStyle(fontSize: 14, color: Color(0xFF9B9B9B)),
               ),
-              child: Icon(n.icon, color: n.color, size: 22),
             ),
-            title: Text(
-              n.title,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-            ),
-            subtitle: Text(
-              n.body,
-              style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            trailing: Text(
-              n.time,
-              style: const TextStyle(fontSize: 11, color: Color(0xFF9B9B9B)),
+          )
+        else
+          ..._items.map(
+            (n) => ListTile(
+              onTap: () => _markRead(n),
+              tileColor: n.isRead ? null : kPurple.withValues(alpha: 0.04),
+              leading: Container(
+                width: 44, height: 44,
+                decoration: BoxDecoration(
+                  color: _iconBg(n.icon),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(_iconData(n.icon), color: _iconColor(n.icon), size: 22),
+              ),
+              title: Text(
+                n.title,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: n.isRead ? FontWeight.w500 : FontWeight.w700,
+                ),
+              ),
+              subtitle: Text(
+                n.body,
+                style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              trailing: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    _timeAgo(n.createdAt),
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF9B9B9B)),
+                  ),
+                  if (!n.isRead) ...[
+                    const SizedBox(height: 4),
+                    Container(
+                      width: 8, height: 8,
+                      decoration: const BoxDecoration(
+                        color: kPurple, shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
-        ),
         const SizedBox(height: 16),
       ],
     );

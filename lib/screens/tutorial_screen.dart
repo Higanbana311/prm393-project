@@ -4,6 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../main.dart';
+import '../services/origami_service.dart';
+import '../services/tutorial_service.dart';
+import '../widgets/share_sheet.dart';
 
 class TutorialScreen extends StatefulWidget {
   const TutorialScreen({super.key});
@@ -15,15 +18,48 @@ class TutorialScreen extends StatefulWidget {
 class _TutorialScreenState extends State<TutorialScreen> {
   int _step = 0;
   bool _done = false;
+  TutorialData? _data;
+  bool _loading = true;
+  bool _initialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      final raw = ModalRoute.of(context)!.settings.arguments as TutorialData?
+          ?? kFeaturedTutorials.first;
+      _initData(raw);
+    }
+  }
+
+  Future<void> _initData(TutorialData raw) async {
+    if (raw.tutorialSteps.isNotEmpty || raw.id == null) {
+      if (mounted) setState(() { _data = raw; _loading = false; });
+      return;
+    }
+    try {
+      final full = await TutorialService.instance.getById(raw.id!);
+      if (mounted) setState(() { _data = full; _loading = false; });
+    } catch (_) {
+      if (mounted) setState(() { _data = raw; _loading = false; });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final data = ModalRoute.of(context)!.settings.arguments as TutorialData?
-        ?? kFeaturedTutorials.first;
+    if (_loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator(color: kPurple)),
+      );
+    }
+
+    final data = _data!;
     final steps = data.tutorialSteps;
 
     if (_done || steps.isEmpty) {
       return _CompletionView(
+        data: data,
         onHome: () => Navigator.of(context)
             .pushNamedAndRemoveUntil(AppRoutes.home, (route) => false),
       );
@@ -67,6 +103,9 @@ class _TutorialScreenState extends State<TutorialScreen> {
                 setState(() => _step++);
               } else {
                 setState(() => _done = true);
+                if (data.id != null) {
+                  OrigamiService.instance.add(data.id!).catchError((_) {});
+                }
               }
             },
           ),
@@ -291,8 +330,9 @@ class _StepCard extends StatelessWidget {
 // ─── Completion screen ────────────────────────────────────────────────────────
 
 class _CompletionView extends StatefulWidget {
-  const _CompletionView({required this.onHome});
+  const _CompletionView({required this.data, required this.onHome});
 
+  final TutorialData data;
   final VoidCallback onHome;
 
   @override
@@ -527,7 +567,12 @@ class _CompletionViewState extends State<_CompletionView> {
                       width: double.infinity,
                       height: 52,
                       child: OutlinedButton.icon(
-                        onPressed: () {},
+                        onPressed: () => showShareSheet(
+                          context,
+                          tutorialId: widget.data.id,
+                          title: widget.data.title,
+                          isCompletion: true,
+                        ),
                         icon: const Icon(Icons.share_outlined),
                         label: const Text('Chia sẻ thành tích'),
                         style: OutlinedButton.styleFrom(
