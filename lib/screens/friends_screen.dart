@@ -151,13 +151,59 @@ class _FriendsScreenState extends State<FriendsScreen> {
                             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                             itemCount: friends.length,
                             separatorBuilder: (_, _) => const SizedBox(height: 10),
-                            itemBuilder: (_, i) => _FriendCard(friend: friends[i]),
+                            itemBuilder: (_, i) => _FriendCard(
+                              friend: friends[i],
+                              onRemove: () => _removeFriend(friends[i]),
+                            ),
                           ),
                         ),
                 ),
               ],
             ),
     );
+  }
+
+  Future<void> _removeFriend(Friend friend) async {
+    if (friend.id == null) return;
+    final displayName = friend.nickname.isNotEmpty ? friend.nickname : friend.name;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Xoá bạn bè'),
+        content: Text('Bạn có chắc muốn xoá $displayName khỏi danh sách bạn bè?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Huỷ'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Xoá'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await FriendService.instance.remove(friend.id!);
+      if (mounted) {
+        setState(() => _friends.removeWhere((f) => f.id == friend.id));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Đã xoá $displayName khỏi danh sách bạn bè'),
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        final msg = AuthService.instance.dioErrorMessage(e);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(msg),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.shade700,
+        ));
+      }
+    }
   }
 
   void _showAddFriendDialog(BuildContext context) {
@@ -776,8 +822,9 @@ class _EmptyState extends StatelessWidget {
 // ─── Friend Card ──────────────────────────────────────────────────────────────
 
 class _FriendCard extends StatelessWidget {
-  const _FriendCard({required this.friend});
+  const _FriendCard({required this.friend, required this.onRemove});
   final Friend friend;
+  final VoidCallback onRemove;
 
   @override
   Widget build(BuildContext context) {
@@ -839,6 +886,14 @@ class _FriendCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+          IconButton(
+            onPressed: onRemove,
+            tooltip: 'Xoá bạn bè',
+            icon: Icon(
+              Icons.person_remove_outlined,
+              color: Colors.red.shade400,
             ),
           ),
         ],

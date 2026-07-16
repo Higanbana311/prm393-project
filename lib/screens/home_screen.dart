@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/tutorial_service.dart';
 import '../services/notification_service.dart';
+import '../services/origami_service.dart';
+import '../services/settings_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,15 +18,33 @@ class _HomeScreenState extends State<HomeScreen> {
   List<TutorialData> _newDesigns = [];
   bool _loading = true;
   String? _error;
+  int _unreadCount = 0;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    _loadUnreadCount();
+  }
+
+  Future<void> _loadUnreadCount() async {
+    try {
+      // Tôn trọng tuỳ chọn: tắt thông báo thì không hiện badge
+      final enabled = await SettingsService.instance.getNotifications();
+      if (!enabled) {
+        if (mounted) setState(() => _unreadCount = 0);
+        return;
+      }
+      final data = await NotificationService.instance.getAll();
+      if (mounted) {
+        setState(() => _unreadCount = data.where((n) => !n.isRead).length);
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadData() async {
     setState(() { _loading = true; _error = null; });
+    OrigamiService.instance.refreshCompleted();
     try {
       final results = await Future.wait([
         TutorialService.instance.getFeatured(),
@@ -49,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (_) => const _NotificationsSheet(),
-    );
+    ).then((_) => _loadUnreadCount());
   }
 
   @override
@@ -60,10 +80,38 @@ class _HomeScreenState extends State<HomeScreen> {
         child: GradientAppBar(
           title: 'Origami',
           actions: [
-            IconButton(
-              onPressed: () => _showNotifications(context),
-              icon: const Icon(Icons.notifications_outlined,
-                  color: Colors.white, size: 26),
+            Stack(
+              children: [
+                IconButton(
+                  onPressed: () => _showNotifications(context),
+                  icon: const Icon(Icons.notifications_outlined,
+                      color: Colors.white, size: 26),
+                ),
+                if (_unreadCount > 0)
+                  Positioned(
+                    right: 6,
+                    top: 6,
+                    child: Container(
+                      constraints: const BoxConstraints(minWidth: 18),
+                      height: 18,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.all(Radius.circular(9)),
+                      ),
+                      child: Center(
+                        child: Text(
+                          _unreadCount > 99 ? '99+' : '$_unreadCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ],
         ),
@@ -370,24 +418,38 @@ class _HorizontalTutorialCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: data.localImageAsset != null
-                  ? Image.asset(data.localImageAsset!,
-                      width: 80, height: 80, fit: BoxFit.cover)
-                  : Image.network(
-                      data.imageUrl,
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Container(
-                        width: 80,
-                        height: 80,
-                        color: const Color(0xFFF3F4F6),
-                        child: const Icon(Icons.image_outlined,
-                            size: 32, color: Color(0xFFD1D5DB)),
-                      ),
-                    ),
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: data.localImageAsset != null
+                      ? Image.asset(data.localImageAsset!,
+                          width: 80, height: 80, fit: BoxFit.cover)
+                      : Image.network(
+                          data.imageUrl,
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => Container(
+                            width: 80,
+                            height: 80,
+                            color: const Color(0xFFF3F4F6),
+                            child: const Icon(Icons.image_outlined,
+                                size: 32, color: Color(0xFFD1D5DB)),
+                          ),
+                        ),
+                ),
+                Positioned(
+                  top: 4,
+                  left: 4,
+                  child: CompletedBuilder(
+                    tutorialId: data.id,
+                    builder: (_, completed) => completed
+                        ? const CompletedBadge(compact: true)
+                        : const SizedBox.shrink(),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(width: 12),
             Expanded(

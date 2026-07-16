@@ -32,6 +32,8 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _loading = true);
     try {
       await AuthService.instance.login(email, password);
+      // Mỗi tài khoản có theme riêng nên phải nạp lại theo user vừa đăng nhập.
+      await applyThemeForCurrentUser();
       if (mounted) Navigator.of(context).pushReplacementNamed(AppRoutes.home);
     } catch (e) {
       if (mounted) _showError(AuthService.instance.dioErrorMessage(e));
@@ -48,21 +50,23 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F0FF),
+      backgroundColor: isDark ? scheme.surface : const Color(0xFFF5F0FF),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Center(
+              Center(
                 child: Text(
                   'Đăng nhập',
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF1A1A2E),
+                    color: isDark ? scheme.onSurface : const Color(0xFF1A1A2E),
                   ),
                 ),
               ),
@@ -74,8 +78,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 32),
-              const Text('Email',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              Text('Email',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: scheme.onSurface)),
               const SizedBox(height: 8),
               _TextField(
                 controller: _emailCtrl,
@@ -83,8 +90,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 20),
-              const Text('Mật khẩu',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              Text('Mật khẩu',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: scheme.onSurface)),
               const SizedBox(height: 8),
               _TextField(
                 controller: _passCtrl,
@@ -112,16 +122,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: () =>
                       Navigator.of(context).pushReplacementNamed(AppRoutes.home),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFFD1D5DB)),
+                    side: BorderSide(
+                        color: isDark ? scheme.outline : const Color(0xFFD1D5DB)),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30)),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Tiếp tục với tư cách khách',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF374151),
+                      color: isDark ? scheme.onSurface : const Color(0xFF374151),
                     ),
                   ),
                 ),
@@ -131,10 +142,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: GestureDetector(
                   onTap: () => Navigator.of(context).pushNamed(AppRoutes.register),
                   child: RichText(
-                    text: const TextSpan(
+                    text: TextSpan(
                       text: 'Chưa có tài khoản? ',
-                      style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
-                      children: [
+                      style: TextStyle(
+                          fontSize: 14,
+                          color: isDark
+                              ? scheme.onSurfaceVariant
+                              : const Color(0xFF6B7280)),
+                      children: const [
                         TextSpan(
                           text: 'Đăng ký ngay',
                           style: TextStyle(
@@ -172,15 +187,18 @@ class _TextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscure,
+      style: TextStyle(color: scheme.onSurface),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(color: Color(0xFFB0B0B0)),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: isDark ? scheme.surfaceContainerHighest : Colors.white,
         suffixIcon: suffixIcon,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(

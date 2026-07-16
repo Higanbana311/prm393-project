@@ -22,6 +22,18 @@ class TutorialService {
     return TutorialData.fromJson(resp.data);
   }
 
+  Future<List<TutorialData>> search(String query) async {
+    final resp = await _dio.get('/tutorials/search',
+        queryParameters: {'q': query});
+    return (resp.data as List).map((j) => TutorialData.fromJson(j)).toList();
+  }
+
+  Future<List<TutorialData>> getByCategory(int categoryId) async {
+    final resp = await _dio.get('/tutorials',
+        queryParameters: {'categoryId': categoryId});
+    return (resp.data as List).map((j) => TutorialData.fromJson(j)).toList();
+  }
+
   /// Chia sẻ một mẫu tới danh sách bạn bè. [type] = 'detail' hoặc 'completion'.
   /// Trả về số người đã nhận được chia sẻ.
   Future<int> share(int tutorialId, List<int> friendIds,

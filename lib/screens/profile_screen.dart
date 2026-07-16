@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/auth_service.dart';
+import '../services/origami_service.dart';
+import '../services/settings_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -24,6 +26,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _loadUser();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final notif = await SettingsService.instance.getNotifications();
+    if (mounted) setState(() => _notifications = notif);
   }
 
   Future<void> _loadUser() async {
@@ -90,6 +98,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _logout() async {
     await AuthService.instance.logout();
+    OrigamiService.instance.clearCompleted();
+    // Trả theme về của khách để không mang chế độ tối của tài khoản cũ sang.
+    await applyThemeForCurrentUser();
     if (mounted) {
       Navigator.of(context).pushReplacementNamed(AppRoutes.login);
     }
@@ -166,8 +177,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 value: _darkMode,
                 onChanged: (v) {
                   setState(() => _darkMode = v);
-                  themeModeNotifier.value =
-                      v ? ThemeMode.dark : ThemeMode.light;
+                  setDarkMode(v);
                 },
               ),
               const Divider(height: 1, indent: 56),
@@ -175,7 +185,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 icon: Icons.notifications_outlined,
                 title: 'Thông báo',
                 value: _notifications,
-                onChanged: (v) => setState(() => _notifications = v),
+                onChanged: (v) {
+                  setState(() => _notifications = v);
+                  SettingsService.instance.setNotifications(v);
+                },
               ),
             ],
           ),

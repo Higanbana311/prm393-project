@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/favorite_service.dart';
+import '../services/origami_service.dart';
 import '../widgets/share_sheet.dart';
 
 class DetailScreen extends StatelessWidget {
@@ -24,13 +25,29 @@ class DetailScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        data.title,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF1A1A2E),
-                        ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              data.title,
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF1A1A2E),
+                              ),
+                            ),
+                          ),
+                          CompletedBuilder(
+                            tutorialId: data.id,
+                            builder: (_, completed) => completed
+                                ? const Padding(
+                                    padding: EdgeInsets.only(left: 8, top: 4),
+                                    child: CompletedBadge(),
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 12),
                       Wrap(
@@ -136,6 +153,7 @@ class _DetailSliverAppBarState extends State<_DetailSliverAppBar> {
   void initState() {
     super.initState();
     _checkFav();
+    OrigamiService.instance.refreshCompleted();
   }
 
   Future<void> _checkFav() async {

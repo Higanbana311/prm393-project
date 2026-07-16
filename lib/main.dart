@@ -4,6 +4,7 @@ import 'screens/onboarding_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/category_screen.dart';
+import 'screens/category_tutorials_screen.dart';
 import 'screens/detail_screen.dart';
 import 'screens/tutorial_screen.dart';
 import 'screens/search_screen.dart';
@@ -12,10 +13,28 @@ import 'screens/friends_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/my_origami_screen.dart';
 import 'screens/favorites_screen.dart';
+import 'services/settings_service.dart';
 
 final themeModeNotifier = ValueNotifier<ThemeMode>(ThemeMode.light);
 
-void main() {
+/// Id các mẫu mà tài khoản hiện tại đã hoàn thành, dùng để đánh dấu ở mọi màn hình.
+final completedIdsNotifier = ValueNotifier<Set<int>>({});
+
+/// Đổi chế độ tối và lưu lại cho riêng tài khoản đang đăng nhập.
+Future<void> setDarkMode(bool dark) async {
+  themeModeNotifier.value = dark ? ThemeMode.dark : ThemeMode.light;
+  await SettingsService.instance.setDarkMode(dark);
+}
+
+/// Nạp lại theme của tài khoản đang đăng nhập (gọi khi mở app, đăng nhập, đăng xuất).
+Future<void> applyThemeForCurrentUser() async {
+  final dark = await SettingsService.instance.getDarkMode();
+  themeModeNotifier.value = dark ? ThemeMode.dark : ThemeMode.light;
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await applyThemeForCurrentUser();
   runApp(const OrigamiApp());
 }
 
@@ -27,6 +46,7 @@ class AppRoutes {
   static const login = '/login';
   static const home = '/home';
   static const category = '/category';
+  static const categoryTutorials = '/category-tutorials';
   static const detail = '/detail';
   static const search = '/search';
   static const profile = '/profile';
@@ -147,6 +167,7 @@ class CategoryData {
         id: j['Id'] as int?,
         name: j['Name'] as String,
         emoji: j['Emoji'] as String,
+        count: j['Count'] as int? ?? 0,
         bgColor: TutorialData._hexColor(j['BgColor'] as String),
       );
 }
@@ -431,6 +452,61 @@ class DifficultyBadge extends StatelessWidget {
   }
 }
 
+/// Nhãn "Đã hoàn thành" hiển thị trên các mẫu đã có trong Origami của tôi.
+class CompletedBadge extends StatelessWidget {
+  const CompletedBadge({super.key, this.compact = false});
+
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFF16A34A),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [
+          BoxShadow(color: Color(0x33000000), blurRadius: 4, offset: Offset(0, 1)),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.check_circle, size: compact ? 12 : 14, color: Colors.white),
+          if (!compact) ...[
+            const SizedBox(width: 4),
+            const Text(
+              'Đã hoàn thành',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Chỉ dựng lại phần con khi trạng thái hoàn thành của [tutorialId] thay đổi.
+class CompletedBuilder extends StatelessWidget {
+  const CompletedBuilder({super.key, required this.tutorialId, required this.builder});
+
+  final int? tutorialId;
+  final Widget Function(BuildContext context, bool completed) builder;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<Set<int>>(
+      valueListenable: completedIdsNotifier,
+      builder: (context, ids, _) =>
+          builder(context, tutorialId != null && ids.contains(tutorialId)),
+    );
+  }
+}
+
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({super.key, required this.currentIndex, required this.onTap});
 
@@ -525,27 +601,40 @@ class TutorialCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              child: data.localImageAsset != null
-                  ? Image.asset(
-                      data.localImageAsset!,
-                      width: double.infinity,
-                      height: 180,
-                      fit: BoxFit.cover,
-                    )
-                  : Image.network(
-                      data.imageUrl,
-                      width: double.infinity,
-                      height: 180,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Container(
-                        width: double.infinity,
-                        height: 180,
-                        color: const Color(0xFFF3F4F6),
-                        child: const Icon(Icons.image_outlined, size: 48, color: Color(0xFFD1D5DB)),
-                      ),
-                    ),
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: data.localImageAsset != null
+                      ? Image.asset(
+                          data.localImageAsset!,
+                          width: double.infinity,
+                          height: 180,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.network(
+                          data.imageUrl,
+                          width: double.infinity,
+                          height: 180,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => Container(
+                            width: double.infinity,
+                            height: 180,
+                            color: const Color(0xFFF3F4F6),
+                            child: const Icon(Icons.image_outlined, size: 48, color: Color(0xFFD1D5DB)),
+                          ),
+                        ),
+                ),
+                Positioned(
+                  top: 10,
+                  left: 10,
+                  child: CompletedBuilder(
+                    tutorialId: data.id,
+                    builder: (_, completed) =>
+                        completed ? const CompletedBadge() : const SizedBox.shrink(),
+                  ),
+                ),
+              ],
             ),
             Padding(
               padding: const EdgeInsets.all(14),
@@ -623,6 +712,7 @@ class OrigamiApp extends StatelessWidget {
           AppRoutes.login: (_) => const LoginScreen(),
           AppRoutes.home: (_) => const HomeScreen(),
           AppRoutes.category: (_) => const CategoryScreen(),
+          AppRoutes.categoryTutorials: (_) => const CategoryTutorialsScreen(),
           AppRoutes.detail: (_) => const DetailScreen(),
           AppRoutes.tutorial: (_) => const TutorialScreen(),
           AppRoutes.search: (_) => const SearchScreen(),

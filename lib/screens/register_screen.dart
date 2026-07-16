@@ -74,21 +74,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final labelStyle = TextStyle(
+      fontSize: 14,
+      fontWeight: FontWeight.w600,
+      color: scheme.onSurface,
+    );
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F0FF),
+      backgroundColor: isDark ? scheme.surface : const Color(0xFFF5F0FF),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Center(
+              Center(
                 child: Text(
                   'Đăng ký',
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF1A1A2E),
+                    color: isDark ? scheme.onSurface : const Color(0xFF1A1A2E),
                   ),
                 ),
               ),
@@ -100,33 +107,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
               const SizedBox(height: 32),
-              const Text('Họ và tên',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              _buildInputField(controller: _nameCtrl, hint: 'Nguyễn Văn A'),
-              const SizedBox(height: 20),
-              const Text('Email',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              Text('Họ và tên', style: labelStyle),
               const SizedBox(height: 8),
               _buildInputField(
+                  context: context, controller: _nameCtrl, hint: 'Nguyễn Văn A'),
+              const SizedBox(height: 20),
+              Text('Email', style: labelStyle),
+              const SizedBox(height: 8),
+              _buildInputField(
+                context: context,
                 controller: _emailCtrl,
                 hint: 'example@email.com',
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 20),
-              const Text('Mật khẩu',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              Text('Mật khẩu', style: labelStyle),
               const SizedBox(height: 8),
               _buildPasswordField(
+                context: context,
                 controller: _passCtrl,
                 obscure: _obscurePassword,
                 onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
               ),
               const SizedBox(height: 20),
-              const Text('Xác nhận mật khẩu',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              Text('Xác nhận mật khẩu', style: labelStyle),
               const SizedBox(height: 8),
               _buildPasswordField(
+                context: context,
                 controller: _confirmCtrl,
                 obscure: _obscureConfirm,
                 onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
@@ -140,10 +147,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: GestureDetector(
                   onTap: () => Navigator.of(context).pop(),
                   child: RichText(
-                    text: const TextSpan(
+                    text: TextSpan(
                       text: 'Đã có tài khoản? ',
-                      style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
-                      children: [
+                      style: TextStyle(
+                          fontSize: 14,
+                          color: isDark
+                              ? scheme.onSurfaceVariant
+                              : const Color(0xFF6B7280)),
+                      children: const [
                         TextSpan(
                           text: 'Đăng nhập',
                           style: TextStyle(
@@ -163,7 +174,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  /// Nền trắng cố định sẽ nuốt mất chữ khi ở chế độ tối, nên phải lấy màu theo theme.
+  static Color _fieldFill(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.brightness == Brightness.dark
+        ? theme.colorScheme.surfaceContainerHighest
+        : Colors.white;
+  }
+
   Widget _buildInputField({
+    required BuildContext context,
     required TextEditingController controller,
     required String hint,
     TextInputType? keyboardType,
@@ -171,11 +191,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
+      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(color: Color(0xFFB0B0B0)),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: _fieldFill(context),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -186,6 +207,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildPasswordField({
+    required BuildContext context,
     required TextEditingController controller,
     required bool obscure,
     required VoidCallback onToggle,
@@ -193,11 +215,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return TextField(
       controller: controller,
       obscureText: obscure,
+      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
       decoration: InputDecoration(
         hintText: '••••••••',
         hintStyle: const TextStyle(color: Color(0xFFB0B0B0)),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: _fieldFill(context),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
